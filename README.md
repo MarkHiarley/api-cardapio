@@ -91,19 +91,9 @@ Lista todos os produtos do cardápio.
 ```
 
 ### 🗑️ Deletar Produto
-**DELETE** `/cardapio/deletar`
+**DELETE** `/cardapio/deletar/:id`
 
 Remove um produto do cardápio.
-
-**Body (JSON):**
-```json
-{
-  "id": "-Ow1NsvpAJAvADeOEezg"
-}
-```
-
-**Ou usando parâmetro na URL:**
-**DELETE** `/cardapio/deletar/:id`
 
 **Resposta de sucesso (200):**
 ```json
@@ -336,9 +326,9 @@ Distribuído sob a Licença MIT. Consulte `LICENSE.txt` para mais informações.
 
 ## Contato
 
-Seu Nome - [seu-linkedin](https://www.linkedin.com/in/seu-perfil/) - seuemail@gmail.com
+Hiarley Costa - [HiarleyCosta](https://www.linkedin.com/in/hiarleysilva/) - contato.hiarleycosta@gmail.com
 
-Link do projeto: [https://github.com/seu-usuario/api-cardapio](https://github.com/seu-usuario/api-cardapio)
+Link do projeto: [https://github.com/MarkHiarley/api-cardapio](https://github.com/MarkHiarley/api-cardapio)
 
 ## Agradecimentos
 
