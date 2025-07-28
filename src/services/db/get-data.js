@@ -20,10 +20,8 @@ export async function getData(req, res) {
         }
         
     } catch (error) {
-        console.error('Error fetching data:', error);
         res.status(500).json({ 
             success: false,
-            error: 'Internal Server Error', 
             error: 'Internal Server Error', 
             details: error.message 
         });

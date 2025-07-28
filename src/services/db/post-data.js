@@ -3,7 +3,6 @@ import db from '../../firebase.js';
 
 export async function cadastrarProduto(dadosProduto) {
     try {
-        console.log('Dados recebidos:', dadosProduto);
         const { nome, preco, categoria, descricao } = dadosProduto;
         if (!nome || preco === undefined || preco === null || !categoria) {
             throw new Error('Nome, preço e categoria são obrigatórios');
@@ -44,7 +43,6 @@ export async function cadastrarProduto(dadosProduto) {
             }
         };
     } catch (error) {
-        console.error('Erro:', error.message);
         throw error;
     }
 }

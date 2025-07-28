@@ -27,7 +27,6 @@ export async function deletarProduto(id) {
             }
         };
     } catch (error) {
-        console.error('Erro ao deletar produto:', error);
         throw error;
     }
 }

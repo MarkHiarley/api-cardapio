@@ -1,19 +1,12 @@
-export default async function enviarQRCode(number, brCode) {
-    if (!brCode) {
-        return {
-            error: 'brCode é obrigatório para enviar mensagem',
-            received_brCode: brCode
-        };
-    }
-
+export default async function enviarPedido(pedido) {
+    const number = "120363419110788884@g.us";
     const url = `${process.env.EVOLUTION_URL}/message/sendText/Teste`;
     const options = {
         method: 'POST',
         headers: { apikey: `${process.env.ZAP_API_KEY}`, 'Content-Type': 'application/json' },
-
         body: JSON.stringify({
-            number: "5588981061375",
-            text: `${brCode}`
+            number: number,
+            text: `Pedido recebido: ${JSON.stringify(pedido, null, 2)}`
         })
     };
 
@@ -23,7 +16,7 @@ export default async function enviarQRCode(number, brCode) {
         return data;
     } catch (error) {
         return { 
-            error: 'Erro ao enviar QR Code via WhatsApp',
+            error: 'Erro ao enviar pedido',
             details: error.message 
         };
     }

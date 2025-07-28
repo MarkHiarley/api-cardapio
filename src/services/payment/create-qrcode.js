@@ -7,14 +7,14 @@ export async function createQRCode(amount) {
         body: JSON.stringify({ amount })
     };
     try {
-
         const response = await fetch(url, options);
         const data = await response.json();
-        console.log(data)
-        return data
+        return data;
     } catch (error) {
-        console.error(error);
-        return { error: 'Erro ao criar QR Code' , details: error.message };
+        return { 
+            error: 'Erro ao criar QR Code',
+            details: error.message 
+        };
     }
 
 }
