@@ -2,7 +2,7 @@ import express from 'express';
 import { getData } from './services/db/get-data.js';
 import { cadastrarProduto } from './services/db/post-data.js';
 import  {deletarProduto } from './services/db/dele-data.js';
-import  {createQRCode}  from './services/payment/post-qrcode.js';
+import  {createQRCode}  from './services/payment/create-qrcode.js';
 import enviarQRCode from './services/payment/send-qrcode-zap.js';
 import enviarQRCodeImagem from './services/payment/send-qrcode-image.js';
 
