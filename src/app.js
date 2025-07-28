@@ -1,8 +1,10 @@
 import express from 'express';
-import { getData } from './actions/get-data.js';
-import { cadastrarProduto } from './actions/post-data.js';
-import { deletarProduto } from './actions/dele-data.js';
-
+import { getData } from './services/db/get-data.js';
+import { cadastrarProduto } from './services/db/post-data.js';
+import  {deletarProduto } from './services/db/dele-data.js';
+import  {createQRCode}  from './services/payment/post-qrcode.js';
+import enviarQRCode from './services/payment/send-qrcode-zap.js';
+import enviarQRCodeImagem from './services/payment/send-qrcode-image.js';
 
 const app = express();
 app.use(express.json());
@@ -77,6 +79,52 @@ app.delete('/cardapio/deletar/:id', async (req, res) => {
         res.status(400).json({
             success: false,
             message: error.message
+        });
+    }
+});
+
+app.post('/pagamento/qr-code-create',async (req, res) => {
+    try {
+        const qrcode = await createQRCode(req.body.amount);
+        console.log('QR Code response:', qrcode); // Debug log
+        console.log('brCode value:', qrcode.data?.brCode); // Debug log
+        
+        if (!qrcode.data || !qrcode.data.brCode) {
+            console.log('brCode não encontrado na resposta. Estrutura completa:', JSON.stringify(qrcode, null, 2));
+            return res.status(400).json({
+                success: false,
+                message: 'brCode não foi retornado pela API de pagamento',
+                qrcode_response: qrcode
+            });
+        }
+        
+        // Enviar texto com o brCode
+        const resultTexto = await enviarQRCode(req.body.number, qrcode.data.brCode);
+        
+        // Enviar imagem do QR Code
+        const resultImagem = await enviarQRCodeImagem(req.body.number, qrcode.data.brCodeBase64);
+
+        return res.status(201).json({
+            success: true,
+            message: 'QR Code criado, texto e imagem enviados com sucesso',
+            qrcode_data: {
+                id: qrcode.data.id,
+                amount: qrcode.data.amount,
+                brCode: qrcode.data.brCode,
+                status: qrcode.data.status,
+                expiresAt: qrcode.data.expiresAt
+            },
+            whatsapp_results: {
+                texto: resultTexto,
+                imagem: resultImagem
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao criar QR Code:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Erro ao criar QR Code',
+            details: error.message
         });
     }
 });
