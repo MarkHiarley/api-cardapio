@@ -38,11 +38,14 @@
 - ✅ **CRUD Completo de Produtos** - Cadastrar, listar, editar e deletar produtos
 - ✅ **Geração de QR Code PIX** - Integração com AbacatePay
 - ✅ **Automação WhatsApp** - Envio automático de código PIX e imagem do QR Code
+- ✅ **Verificação de Pagamento** - Checagem automática de status PIX
+- ✅ **Envio Automático de Pedidos** - Impressão automática após confirmação
 - ✅ **Validação de Dados** - Validação robusta de preços e campos obrigatórios
 - ✅ **Formatação Automática** - Preços arredondados automaticamente
 - ✅ **Firebase Integration** - Banco de dados em tempo real
 - ✅ **Docker Support** - Containerização completa
 - ✅ **Error Handling** - Tratamento de erros padronizado
+- ✅ **Agente Inteligente** - Prompt completo para chatbots/agentes
 
 ## 📚 Endpoints
 
@@ -137,12 +140,12 @@ Remove um produto do cardápio.
 }
 ```
 
-## 💳 Sistema de Pagamentos
+## 💳 Sistema de Pagamentos PIX + WhatsApp
 
-### 🔄 Criar Pagamento PIX + WhatsApp
+### 🔄 Criar QR Code PIX (Nova API Integrada)
 **POST** `/pagamento/qr-code-create`
 
-Cria um QR Code PIX e envia automaticamente via WhatsApp (texto + imagem).
+**✨ Nova funcionalidade:** Cria um QR Code PIX e envia automaticamente via WhatsApp (texto + imagem) em uma única chamada!
 
 **Body (JSON):**
 ```json
@@ -152,11 +155,21 @@ Cria um QR Code PIX e envia automaticamente via WhatsApp (texto + imagem).
 }
 ```
 
+**Parâmetros:**
+- `amount`: Valor em centavos (2500 = R$ 25,00)
+- `number`: WhatsApp do cliente no formato 5588999999999
+
+**✅ A API automaticamente:**
+1. Gera QR Code PIX na AbacatePay
+2. Envia código PIX por texto no WhatsApp
+3. Envia imagem do QR Code no WhatsApp
+4. Retorna ID do pagamento para verificação
+
 **Resposta de sucesso (201):**
 ```json
 {
   "success": true,
-  "message": "QR Code criado, texto e imagem enviados com sucesso",
+  "message": "QR Code criado e enviado com sucesso",
   "qrcode_data": {
     "id": "pix_char_XtCK5duRaJP4kEGu5UNDxrau",
     "amount": 2500,
@@ -165,30 +178,76 @@ Cria um QR Code PIX e envia automaticamente via WhatsApp (texto + imagem).
     "expiresAt": "2025-07-29T02:34:33.436Z"
   },
   "whatsapp_results": {
-    "texto": {
-      "key": { "id": "msg_123" },
-      "message": { "conversation": "Código enviado" },
-      "messageTimestamp": 1753671837
-    },
-    "imagem": {
-      "key": { "id": "img_456" },
-      "message": { "imageMessage": "QR Code enviado" }
+    "texto": { "key": { "id": "msg_123" } },
+    "imagem": { "key": { "id": "img_456" } }
+  }
+}
+```
+
+### 🔍 Verificar Pagamento + Enviar Pedido
+**POST** `/pagamento/qr-code-check?id={payment_id}`
+
+**✨ Nova funcionalidade:** Verifica status do pagamento e, se confirmado, envia automaticamente o pedido para impressão!
+
+**Query Params:**
+- `id`: ID do pagamento retornado na criação do QR Code
+
+**Body (JSON):**
+```json
+{
+  "pedido": {
+    "itens": [
+      {
+        "nome": "Hambúrguer Clássico",
+        "quantidade": 2,
+        "preco": 25.90
+      },
+      {
+        "nome": "Refrigerante",
+        "quantidade": 1,
+        "preco": 6.00
+      }
+    ],
+    "total": 57.80,
+    "entrega": "Retirada no balcão",
+    "endereco": null,
+    "pagamento": "PIX",
+    "cliente_whatsapp": "5588981061375"
+  }
+}
+```
+
+**✅ Se pagamento confirmado:**
+```json
+{
+  "success": true,
+  "message": "Pagamento confirmado e pedido enviado com sucesso",
+  "payment_status": "PAID",
+  "payment_data": {
+    "data": {
+      "id": "pix_char_XtCK5duRaJP4kEGu5UNDxrau",
+      "status": "PAID",
+      "amount": 5780,
+      "paidAt": "2025-07-28T15:45:21Z"
     }
   }
 }
 ```
 
-### 🔧 APIs Integradas
-
-**AbacatePay (PIX):**
-- Geração de QR Codes PIX
-- Valores em centavos (2500 = R$ 25,00)
-- Códigos com validade de 24 horas
-
-**Evolution API (WhatsApp):**
-- Envio de mensagens de texto
-- Envio de imagens/mídia
-- Integração com instâncias WhatsApp
+**⏳ Se pagamento pendente:**
+```json
+{
+  "success": false,
+  "message": "Pagamento ainda pendente",
+  "status": "PENDING",
+  "payment_data": {
+    "data": {
+      "status": "PENDING",
+      "expiresAt": "2025-07-29T02:34:33.436Z"
+    }
+  }
+}
+```
 
 ## ✅ Validações
 
@@ -297,12 +356,16 @@ api-cardapio/
 │   │   │   ├── get-data.js           # Buscar produtos
 │   │   │   ├── post-data.js          # Cadastrar produtos
 │   │   │   └── dele-data.js          # Deletar produtos
-│   │   └── payment/
-│   │       ├── post-qrcode.js        # Gerar QR Code PIX
-│   │       ├── send-qrcode-zap.js    # Enviar texto WhatsApp
-│   │       └── send-qrcode-image.js  # Enviar imagem WhatsApp
+│   │   ├── payment/
+│   │   │   ├── create-qrcode.js      # Gerar QR Code PIX
+│   │   │   ├── send-qrcode-zap.js    # Enviar texto WhatsApp  
+│   │   │   ├── send-qrcode-image.js  # Enviar imagem WhatsApp
+│   │   │   └── check-payment.js      # Verificar status pagamento
+│   │   └── notes/
+│   │       └── send-pedido.js        # Enviar pedido para impressão
 │   ├── firebase.js                   # Configuração Firebase
 │   └── app.js                        # Servidor Express
+├── AGENTE_MASTER_MIX.md              # 🤖 Prompt completo para agentes
 ├── .env.example                      # Exemplo de variáveis
 ├── .gitignore
 ├── package.json
@@ -440,3 +503,75 @@ Distribuído sob a Licença MIT. Consulte `LICENSE.txt` para mais informações.
 * [Evolution API](https://evolution.github.io/) - API para automação WhatsApp
 * [Node.js](https://nodejs.org/) - Runtime JavaScript
 * [Docker](https://www.docker.com/) - Plataforma de containerização
+
+## 🤖 Agente Inteligente Master Mix
+
+### 📋 Prompt Completo para Chatbots
+
+A API vem com um **prompt completo e detalhado** para criação de agentes inteligentes de atendimento. O arquivo `AGENTE_MASTER_MIX.md` contém:
+
+#### 🔄 Fluxo Completo de Atendimento:
+1. **Boas-vindas + Cardápio** - Busca produtos disponíveis via API
+2. **Receber Pedido** - Coleta itens e quantidades
+3. **Confirmação + Total** - Calcula e confirma valores
+4. **Entrega/Retirada** - Define modo de entrega
+5. **Forma de Pagamento** - PIX ou Dinheiro
+6. **Geração de PIX** - Criação automática + WhatsApp
+7. **Verificação de Pagamento** - Confirmação automática
+8. **Impressão Automática** - Envio para cozinha
+9. **Finalização** - Confirmação ao cliente
+
+#### 🎯 Funcionalidades do Agente:
+- ✅ **Linguagem natural** - Conversa como atendente humano
+- ✅ **API Integration** - Todas as chamadas documentadas
+- ✅ **Tratamento de Erros** - Respostas para falhas de pagamento
+- ✅ **Validações** - Produtos indisponíveis, valores, etc.
+- ✅ **Fluxo PIX Completo** - Geração → Verificação → Impressão
+- ✅ **WhatsApp Ready** - Formatação otimizada para chat
+
+#### 📱 Exemplo de Conversa:
+```
+Cliente: Oi, quero fazer um pedido
+Agente: Olá! Seja bem-vindo à Master Mix! 🍔
+        Aqui está nosso cardápio:
+        🍔 X-Burger - R$15,00
+        🍟 Batata - R$8,00
+        🥤 Coca-Cola - R$5,00
+        
+Cliente: Quero 1 X-Burger e 1 Coca
+Agente: Perfeito! Seu pedido:
+        - 1x X-Burger (R$15,00)
+        - 1x Coca-Cola (R$5,00)
+        Total: R$20,00
+        
+        Deseja entrega ou vai retirar no balcão?
+```
+
+#### 🔗 APIs Utilizadas pelo Agente:
+- **Cardápio:** `GET /cardapio`
+- **Gerar PIX:** `POST /pagamento/qr-code-create`
+- **Verificar Pagamento:** `POST /pagamento/qr-code-check?id={id}`
+
+> 📄 **Acesse o arquivo completo:** [`AGENTE_MASTER_MIX.md`](./AGENTE_MASTER_MIX.md)
+
+## 🎯 Melhorias Implementadas
+
+### ✨ APIs Integradas (Nova Versão)
+- **Pagamento Único:** Criação de PIX + Envio WhatsApp em uma chamada
+- **Verificação Inteligente:** Check de pagamento + Envio automático do pedido
+- **Tratamento de Erros:** Respostas padronizadas e informativas
+- **Validações Robustas:** Campos obrigatórios e tipos corretos
+
+### 🧹 Otimizações de Código
+- **Logs Removidos:** Limpeza completa de logs de debug
+- **Respostas Melhoradas:** Mensagens mais claras e úteis
+- **Estrutura Padronizada:** Todas as respostas seguem o padrão `{ success, message, data }`
+- **Middleware 404:** Tratamento elegante de rotas não encontradas
+
+## 📖 Documentação Completa
+
+- 📋 **[README.md](./README.md)** - Documentação principal da API
+- 🤖 **[AGENTE_MASTER_MIX.md](./AGENTE_MASTER_MIX.md)** - Prompt completo para agentes inteligentes
+- 📚 **[EXEMPLOS_API.md](./EXEMPLOS_API.md)** - Exemplos práticos de uso da API
+- 🐳 **[Dockerfile](./Dockerfile)** - Configuração Docker
+- ⚙️ **[.env.example](./.env.example)** - Variáveis de ambiente
