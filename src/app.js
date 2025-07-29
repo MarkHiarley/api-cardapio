@@ -24,7 +24,8 @@ app.get('/', (req, res) => {
             },
             pagamento: {
                 criar_qrcode: 'POST /pagamento/qr-code-create',
-                verificar_pagamento: 'POST /pagamento/qr-code-check?id=payment_id'
+                verificar_pagamento: 'POST /pagamento/qr-code-check?id=payment_id',
+                enviar_pedido_dinheiro: 'POST /enviarpedido/dinheiro'
             }
         },
         documentation: 'Consulte o README.md para mais detalhes'
@@ -218,6 +219,44 @@ app.post('/pagamento/qr-code-check', async (req, res) => {
     }
 });
 
+// Rota para envio de pedido pago em dinheiro
+app.post('/enviarpedido/dinheiro', async (req, res) => {
+    try {
+        const { pedido } = req.body;
+        
+        if (!pedido) {
+            return res.status(400).json({
+                success: false,
+                message: 'Dados do pedido são obrigatórios',
+                help: 'Forneça os dados completos do pedido no body da requisição'
+            });
+        }
+
+        // Gerar ID único para pedido em dinheiro
+        const timestamp = Date.now();
+        const dinheiroId = `dinheiro_${timestamp}`;
+
+        // Enviar pedido para a cozinha/impressão
+        const resultado = await enviarPedido(pedido);
+        
+        return res.status(201).json({
+            success: true,
+            message: 'Pedido pago em dinheiro enviado com sucesso para a cozinha',
+            payment_type: 'dinheiro',
+            dinheiro_id: dinheiroId,
+            pedido_enviado: true,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Erro ao enviar pedido pago em dinheiro',
+            details: process.env.NODE_ENV === 'development' ? error.message : 'Erro interno do servidor'
+        });
+    }
+});
+
 // Middleware para rotas não encontradas
 app.use((req, res) => {
     res.status(404).json({
@@ -230,7 +269,8 @@ app.use((req, res) => {
             'POST /cardapio/cadastrar',
             'DELETE /cardapio/deletar/:id',
             'POST /pagamento/qr-code-create',
-            'POST /pagamento/qr-code-check?id=payment_id'
+            'POST /pagamento/qr-code-check?id=payment_id',
+            'POST /enviarpedido/dinheiro'
         ]
     });
 });
