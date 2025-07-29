@@ -12,7 +12,7 @@ export default async function enviarQRCode(number, brCode) {
         headers: { apikey: `${process.env.ZAP_API_KEY}`, 'Content-Type': 'application/json' },
 
         body: JSON.stringify({
-            number: "5588981061375",
+            number: number,
             text: `${brCode}`
         })
     };

@@ -19,7 +19,7 @@ export default async function enviarQRCodeImagem(number, brCodeBase64) {
         headers: { apikey: `${process.env.ZAP_API_KEY}`, 'Content-Type': 'application/json' },
         
         body: JSON.stringify({
-            number: number || "5588981061375",
+            number: number,
             mediatype: "image",
             media: mediaData
         })
